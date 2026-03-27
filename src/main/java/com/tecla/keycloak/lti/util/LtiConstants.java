@@ -5,7 +5,7 @@ public final class LtiConstants {
     private LtiConstants() {}
 
     public static final String PROVIDER_ID = "lti-v13";
-    public static final String PROVIDER_NAME = "LTI 1.3 (Blackboard)";
+    public static final String PROVIDER_NAME = "LTI 1.3";
 
     // LTI claim base
     public static final String LTI_CLAIM_PREFIX = "https://purl.imsglobal.org/spec/lti/claim/";
