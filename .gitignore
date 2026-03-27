@@ -26,3 +26,17 @@ replay_pid*
 .claude
 target/
 backup/
+
+# OS files
+.DS_Store
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.classpath
+.project
+.settings/
+*.sublime-*

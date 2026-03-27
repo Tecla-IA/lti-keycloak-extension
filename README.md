@@ -112,4 +112,4 @@ src/main/java/com/tecla/keycloak/lti/
 
 ## License
 
-Proprietary -- Tecla.
+This project is licensed under the [MIT License](LICENSE).
