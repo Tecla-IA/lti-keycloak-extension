@@ -89,13 +89,17 @@ public class LtiLoginInitiationEndpoint {
                     : targetLinkUri;
 
             // Encode LTI params into a cookie so performLogin() can read them
+            // Cookie path must include the base URI path (e.g. "/auth/") so it's
+            // sent on subsequent requests under /auth/realms/{realm}/...
             String cookieValue = encodeLtiParams(loginHint, ltiMessageHint, targetLinkUri);
+            String basePath = session.getContext().getUri().getBaseUri().getPath();
             NewCookie ltiCookie = new NewCookie.Builder(LTI_PARAMS_COOKIE)
                     .value(cookieValue)
-                    .path("/realms/" + realm.getName())
+                    .path(basePath + "realms/" + realm.getName())
                     .maxAge(300) // 5 min TTL
                     .secure(true)
                     .httpOnly(true)
+                    .sameSite(NewCookie.SameSite.NONE) // LTI launches originate cross-site
                     .build();
 
             // Redirect to Keycloak's OIDC auth endpoint with kc_idp_hint to trigger the LTI broker flow
