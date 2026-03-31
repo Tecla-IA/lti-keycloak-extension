@@ -108,9 +108,8 @@ public class LtiRoleMapper extends AbstractIdentityProviderMapper {
             logger.debugf("Granted role '%s' to user '%s' based on LTI role '%s'",
                     keycloakRoleName, user.getUsername(), targetLtiRole);
         } else {
-            user.deleteRoleMapping(role);
-            logger.debugf("Removed role '%s' from user '%s' (LTI role '%s' not present)",
-                    keycloakRoleName, user.getUsername(), targetLtiRole);
+            logger.debugf("LTI role '%s' not present for user '%s', skipping role '%s'",
+                    targetLtiRole, user.getUsername(), keycloakRoleName);
         }
     }
 }
