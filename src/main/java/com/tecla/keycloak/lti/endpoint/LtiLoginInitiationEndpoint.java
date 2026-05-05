@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import org.jboss.logging.Logger;
 import org.keycloak.models.IdentityProviderModel;
+import org.keycloak.models.IdentityProviderQuery;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 
@@ -145,7 +146,7 @@ public class LtiLoginInitiationEndpoint {
     }
 
     private IdentityProviderModel findLtiProvider(String iss, String clientId) {
-        for (IdentityProviderModel idp : realm.getIdentityProvidersStream().toList()) {
+        for (IdentityProviderModel idp : session.identityProviders().getAllStream(IdentityProviderQuery.any(), null, null).toList()) {
             if (!LtiConstants.PROVIDER_ID.equals(idp.getProviderId())) {
                 continue;
             }

@@ -7,7 +7,10 @@ import com.tecla.keycloak.lti.util.LtiJwtValidator;
 import com.tecla.keycloak.lti.util.LtiJwtValidator.LtiJwtValidationException;
 import com.tecla.keycloak.lti.util.LtiNonceStore;
 import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -16,7 +19,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.broker.provider.AbstractIdentityProvider;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
-import org.keycloak.broker.provider.IdentityProvider;
+import org.keycloak.broker.provider.UserAuthenticationIdentityProvider;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.KeycloakSession;
@@ -114,20 +117,20 @@ public class LtiIdentityProvider extends AbstractIdentityProvider<LtiIdentityPro
     }
 
     @Override
-    public Object callback(RealmModel realm, IdentityProvider.AuthenticationCallback callback, EventBuilder event) {
+    public Object callback(RealmModel realm, UserAuthenticationIdentityProvider.AuthenticationCallback callback, EventBuilder event) {
         return new LtiEndpoint(realm, callback, event, jwtValidator, getConfig(), LtiIdentityProvider.this);
     }
 
     public static class LtiEndpoint {
 
         private final RealmModel realm;
-        private final IdentityProvider.AuthenticationCallback callback;
+        private final UserAuthenticationIdentityProvider.AuthenticationCallback callback;
         private final EventBuilder event;
         private final LtiJwtValidator jwtValidator;
         private final LtiIdentityProviderConfig config;
         private final LtiIdentityProvider provider;
 
-        public LtiEndpoint(RealmModel realm, IdentityProvider.AuthenticationCallback callback, EventBuilder event,
+        public LtiEndpoint(RealmModel realm, UserAuthenticationIdentityProvider.AuthenticationCallback callback, EventBuilder event,
                            LtiJwtValidator jwtValidator, LtiIdentityProviderConfig config, LtiIdentityProvider provider) {
             this.realm = realm;
             this.callback = callback;
@@ -138,7 +141,22 @@ public class LtiIdentityProvider extends AbstractIdentityProvider<LtiIdentityPro
         }
 
         @POST
-        public Response handleCallback(@FormParam("id_token") String idToken, @FormParam("state") String state) {
+        @Path("")
+        public Response handleCallbackPost(@FormParam("id_token") String idToken, @FormParam("state") String state) {
+            logger.infof("LTI broker callback (POST): has_id_token=%s, has_state=%s",
+                    idToken != null && !idToken.isBlank(), state != null && !state.isBlank());
+            return handleCallback(idToken, state);
+        }
+
+        @GET
+        @Path("")
+        public Response handleCallbackGet(@QueryParam("id_token") String idToken, @QueryParam("state") String state) {
+            logger.warnf("LTI broker callback received via GET — platform did not honor response_mode=form_post. has_id_token=%s, has_state=%s",
+                    idToken != null && !idToken.isBlank(), state != null && !state.isBlank());
+            return handleCallback(idToken, state);
+        }
+
+        private Response handleCallback(String idToken, String state) {
             try {
                 if (idToken == null || idToken.isBlank()) {
                     logger.error("LTI callback: missing id_token");
