@@ -211,7 +211,11 @@ public class LtiIdentityProvider extends AbstractIdentityProvider<LtiIdentityPro
             context.setUsername(sub);
             context.setModelUsername(sub);
 
-            // Extract email, with fallback generation if configured
+            // Extract email, with fallback generation if configured.
+            // Fallback always uses `sub` as the local part — `sub` is the only field
+            // guaranteed unique per user per platform by the LTI 1.3 spec. Name-based
+            // local parts collide whenever the platform anonymizes users or sends
+            // generic names (e.g., Blackboard proxy/anonymous launches).
             JsonNode emailNode = payload.get("email");
             if (emailNode != null && !emailNode.isNull()) {
                 context.setEmail(emailNode.asText());
@@ -219,22 +223,11 @@ public class LtiIdentityProvider extends AbstractIdentityProvider<LtiIdentityPro
                 String emailDomain = config.getEmailDomain();
                 String emailTag = config.getEmailTag();
                 if (emailDomain != null && !emailDomain.isBlank()) {
-                    // Build local part from first+last name if available, otherwise fall back to sub
-                    String localPart;
-                    JsonNode givenNode = payload.get("given_name");
-                    JsonNode familyNode = payload.get("family_name");
-                    if (givenNode != null && !givenNode.isNull() && familyNode != null && !familyNode.isNull()) {
-                        localPart = (givenNode.asText().trim() + "." + familyNode.asText().trim())
-                                .toLowerCase().replaceAll("\\s+", "");
-                    } else {
-                        localPart = sub;
-                    }
-
                     String generatedEmail;
                     if (emailTag != null && !emailTag.isBlank()) {
-                        generatedEmail = localPart + "+" + emailTag + "@" + emailDomain;
+                        generatedEmail = sub + "+" + emailTag + "@" + emailDomain;
                     } else {
-                        generatedEmail = localPart + "@" + emailDomain;
+                        generatedEmail = sub + "@" + emailDomain;
                     }
                     context.setEmail(generatedEmail);
                     logger.infof("Generated fallback email for LTI user %s: %s", sub, generatedEmail);
